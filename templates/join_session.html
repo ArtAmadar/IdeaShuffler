@@ -1,0 +1,165 @@
+<!-- templates/join_session.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <title>Join Session</title>
+</head>
+<body>
+    <h1>Welcome to Session: {{ session_code }}</h1>
+    <div class="container">
+        <!-- Left column: Form -->
+        <div class="column">
+            <h2>Submit Your Idea</h2>
+            <p>Connected Users: <span id="userCount">1</span></p>
+            <p>Total Ideas: <span id="ideaCount">0</span></p>
+            <form id="ideaForm">
+                <label for="idea">Enter your idea:</label><br>
+                <input type="text" id="idea" name="idea" /><br><br>
+                <button type="submit">Send Idea</button>
+            </form>
+            <button id="shuffleButton">Shuffle Ideas</button>
+        </div>
+
+        <!-- Right column: User list -->
+        <div class="column">
+            <h2>Users and Their Ideas</h2>
+            <div class="user-list" id="userList"></div>
+        </div>
+    </div>
+
+    <!-- Ideas list -->
+    <div class="ideas-list">
+        <h2>Your Ideas</h2>
+        <div id="ideasContainer"></div>
+    </div>
+
+    <script>
+        const sessionCode = "{{ session_code }}"; // Ensure this is rendered correctly
+        const ws = new WebSocket("ws://" + window.location.host + "/ws/" + sessionCode);
+
+        const userCountSpan = document.getElementById('userCount');
+        const ideasContainer = document.getElementById('ideasContainer');
+        const userList = document.getElementById('userList');
+        const ideaForm = document.getElementById('ideaForm');
+        const ideaInput = document.getElementById('idea');
+        const ideaCountSpan = document.getElementById('ideaCount');
+        const shuffleButton = document.getElementById('shuffleButton');
+
+        let username = prompt("Enter your username (leave blank for random):");
+        if (!username) {
+            username = ""; // Send empty, server will handle random generation
+        }
+
+        ws.onopen = () => {
+            console.log("WebSocket connection established");
+            ws.send(JSON.stringify({ type: "username", username: username }));
+        };
+        
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            switch (data.type) {
+                case 'update':
+                    userCountSpan.textContent = data.users_count;
+                    renderUserList(data.users);
+                    break;
+        
+                case 'update_user':
+                    renderUserIdeas(data.user_ideas);
+                    ideaCountSpan.textContent = data.ideas_count
+                    break;
+                
+                case 'user_count':
+                    userCountSpan.textContent = data.count;
+                    break;
+        
+                case 'initial_data':
+                    ideaCountSpan.textContent = data.idea_count;
+                    renderUserList(data.users);
+                    renderUserIdeas(data.your_ideas);
+                    break;
+        
+                case 'your_ideas':
+                    renderUserIdeas(data.your_ideas);
+                    break;
+        
+                case 'idea_count':
+                    ideaCountSpan.textContent = data.content;
+                    break;
+        
+                case 'shuffled_ideas':
+                    alert("Your ideas:\n1. " + data.ideas[0] + "\n2. " + data.ideas[1]);
+                    break;
+        
+                case 'session_closed':
+                    alert("The session is now closed. Thank you for participating!");
+                    shuffleButton.disabled = true;
+                    ideaForm.style.display = 'none';
+                    break;
+                
+                case 'synch_error':
+                    syncUser();
+                    
+                case 'error':
+                    alert(data.message);
+                    break;
+        
+                default:
+                    console.warn("Received unknown message type:", data.type);
+            }
+        };
+        
+        ideaForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idea = ideaInput.value.trim();
+            if (idea) {
+                ws.send(JSON.stringify({ type: "idea", content: idea }));
+                ideaInput.value = '';
+            }
+        });
+        
+        function renderUserIdeas(ideas) {
+            ideasContainer.innerHTML = '';
+            ideas.forEach((idea, index) => {
+                const ideaItem = document.createElement('div');
+                ideaItem.className = 'idea-item';
+                ideaItem.innerHTML = `
+                    <span>${idea}</span>
+                    <button class="delete-button" onclick="deleteIdea(${index})">X</button>
+                `;
+                ideasContainer.appendChild(ideaItem);
+            });
+        }
+        
+        function renderUserList(users) {
+            const currentUser = username; // Replace with your current user's username variable
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const userItem = document.createElement('p');
+                if (user.username === currentUser) {
+                    userItem.innerHTML = `<strong>${user.username}</strong>: ${user.ideas_count} ideas`;
+                } else {
+                    userItem.textContent = `${user.username}: ${user.ideas_count} ideas`;
+                }
+                userList.appendChild(userItem);
+            });
+        }
+        
+        function deleteIdea(index) {
+            ws.send(JSON.stringify({ type: "delete_idea", index: index }));
+        }
+        
+        shuffleButton.addEventListener('click', () => {
+            ws.send(JSON.stringify({ type: "shuffle" }));
+        });
+
+        function syncUser() {
+            ws.send(JSON.stringify({ type: "user-info", username: username}))
+        }
+    </script>
+    
+</body>
+</html>

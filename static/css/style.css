@@ -1,0 +1,83 @@
+/*static/css/style.css*/
+
+#sessionForm, #ideasForm {
+    margin-top: 20px;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+h1 {
+    color: #333;
+}
+h2 {
+    color: #333;
+    text-align: center;
+}
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    
+}
+.container {
+    display: flex;
+    width: 90%;
+    max-width: 800px;
+    justify-content: space-between;
+    align-items: flex-start; /* Align columns at the top */
+    padding-bottom: 1em;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Horizontally center the content */
+    flex: 1;
+    margin: 0 10px;
+    width: 50%;
+}
+
+form {
+    text-align: left; /* Align the form content to the left */
+    margin: 0; /* Remove extra margins */
+}
+
+.ideas-list {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    width: 80%;
+    text-align: center; /* Center text inside the box */
+}
+
+.user-list {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    width: 80%;
+    text-align: center; /* Center text inside the box */
+}
+
+.idea-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+.delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 2px 5px;
+}
+.delete-button:hover {
+    background-color: darkred;
+}
